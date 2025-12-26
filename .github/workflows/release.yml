@@ -3,7 +3,10 @@ name: Build and Release
 on:
   push:
     tags:
-      - "v*" # v1.0.0 などのタグが Push された時に実行
+      - "v*" # v9.9.9 などのタグが Push された時に実行
+
+permissions:
+  contents: write
 
 jobs:
   build-and-release:
