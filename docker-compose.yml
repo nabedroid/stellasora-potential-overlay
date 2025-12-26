@@ -1,0 +1,7 @@
+services:
+  builder:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: /bin/bash
