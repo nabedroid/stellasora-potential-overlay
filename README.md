@@ -136,3 +136,9 @@ MIT License
 - ステラソラを起動していない状態で設定を開くと対象ウィンドウが空になる
   - ウィンドウのリストにStellaSoraが存在しないので
   - 面倒なので StellaSora 固定でいい気がする
+- github のリリースを更新する場合
+  - git add .
+  - git commit -m "update"
+  - git push
+  - git tag v9.9.9
+  - git push origin v9.9.9
