@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly OcrService _ocrService;
     private readonly OverlayWindow _overlayWindow;
     private readonly DispatcherTimer _captureTimer;
+    private readonly MasterDataService _masterDataService;
 
     private AppConfig _config;
     private bool _isRunning = false;
@@ -28,6 +29,7 @@ public partial class MainWindow : Window
         _captureService = new WindowCaptureService();
         _ocrService = new OcrService();
         _overlayWindow = new OverlayWindow();
+        _masterDataService = new MasterDataService();
 
         // 設定の読み込み
         _config = _configService.LoadConfig();
@@ -148,6 +150,30 @@ public partial class MainWindow : Window
         StatusTextBlock.Foreground = System.Windows.Media.Brushes.Gray;
     }
 
+    private void SetupButton_Click(object sender, RoutedEventArgs e) {
+        if (_isRunning) {
+            MessageBox.Show("認識を停止してから準備を行ってください。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var setupWindow = new SetupWindow(_masterDataService, _config);
+        setupWindow.Owner = this;
+        setupWindow.ShowDialog();
+
+        if (setupWindow.DialogResult == true) {
+            // 設定を反映
+            _config.SelectedMainChar = setupWindow.SelectedMain;
+            _config.SelectedSupportChar1 = setupWindow.SelectedSup1;
+            _config.SelectedSupportChar2 = setupWindow.SelectedSup2;
+            
+            // ターゲットリストを更新
+            _config.CharacterTargets = setupWindow.GeneratedTargets;
+
+            // 保存
+            _configService.SaveConfig(_config);
+        }
+    }
+
     /// <summary>
     /// 設定ボタン
     /// </summary>
@@ -161,6 +187,7 @@ public partial class MainWindow : Window
         }
 
         var settingsWindow = new SettingsWindow(_configService, _config);
+
         if (settingsWindow.ShowDialog() == true)
         {
             // 設定を再読み込み

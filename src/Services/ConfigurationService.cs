@@ -83,7 +83,9 @@ public class ConfigurationService
             DebugMode = false,
             CommonY = 0.504,
             CommonWidth = 0.227,
-            CommonHeight = 0.097
+            CommonHeight = 0.139,
+            ColorThreshold = 185,
+            UseColorThreshold = true
         };
     }
 

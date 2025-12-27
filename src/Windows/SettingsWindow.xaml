@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:StellasoraPotentialOverlay.Models"
         Title="設定"
-        Height="750"
-        Width="900"
+        Height="500"
+        Width="600"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
     <Grid Margin="20">
@@ -12,106 +12,63 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 対象ウィンドウ選択 -->
         <GroupBox Header="対象ウィンドウ" Grid.Row="0" Margin="0,0,0,15">
             <StackPanel Margin="10">
-                <ComboBox x:Name="WindowComboBox" 
-                          Height="30"
-                          Margin="0,5,0,0"/>
-                <Button Content="ウィンドウリストを更新" 
-                        Click="RefreshWindows_Click"
-                        Margin="0,10,0,0"
-                        HorizontalAlignment="Left"/>
+                <ComboBox x:Name="WindowComboBox" Height="30" Margin="0,5,0,0"/>
+                <Button Content="ウィンドウリストを更新" Click="RefreshWindows_Click" Margin="0,10,0,0" HorizontalAlignment="Left" Padding="10,2"/>
             </StackPanel>
         </GroupBox>
 
-        <!-- 認識設定 -->
-        <GroupBox Header="認識設定" Grid.Row="1" Margin="0,0,0,15">
-            <StackPanel Margin="10">
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="キャプチャ間隔 (ミリ秒):" VerticalAlignment="Center" Width="180"/>
-                    <TextBox x:Name="IntervalTextBox" Width="100" Text="1000"/>
-                </StackPanel>
-                <CheckBox x:Name="DebugModeCheckBox" Content="デバッグモード（OCR領域と認識文字を表示）" Margin="0,10,0,0"/>                
-            </StackPanel>
+        <GroupBox Header="認識・前処理設定" Grid.Row="1" Margin="0,0,0,15">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="キャプチャ間隔 (ミリ秒):" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Width="150" Margin="0,5"/>
+                <TextBox x:Name="IntervalTextBox" Grid.Row="0" Grid.Column="1" Width="80" Text="1000" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,5"/>
+                <CheckBox x:Name="UseColorThresholdCheckBox" Grid.Row="1" Grid.Column="0" Content="色閾値を使用する" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                <TextBox x:Name="ColorThresholdTextBox" Grid.Row="1" Grid.Column="1" Width="80" Text="185" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                <CheckBox x:Name="DebugModeCheckBox" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Content="デバッグモード（OCR領域と認識文字を表示）" Margin="0,10,0,0" VerticalAlignment="Center"/>
+            </Grid>
         </GroupBox>
 
-        <!-- OCR領域共通設定 -->
         <GroupBox Header="OCR領域共通設定" Grid.Row="2" Margin="0,0,0,15">
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    </Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                
-                <TextBlock Text="Y座標:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBox x:Name="CommonYTextBox" Grid.Row="0" Grid.Column="1" Text="0.504" Margin="0,0,20,0"/>
-                
-                <TextBlock Text="幅:" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBox x:Name="CommonWidthTextBox" Grid.Row="0" Grid.Column="3" Text="0.227" Margin="0,0,20,0"/>
-                
-                <TextBlock Text="高さ:" Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBox x:Name="CommonHeightTextBox" Grid.Row="0" Grid.Column="5" Text="0.097"/>
-                
+                <TextBlock Text="Y座標:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                <TextBox x:Name="CommonYTextBox" Grid.Row="0" Grid.Column="1" Text="0.504" Margin="0,0,20,5"/>
+                <TextBlock Text="幅:" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                <TextBox x:Name="CommonWidthTextBox" Grid.Row="0" Grid.Column="3" Text="0.227" Margin="0,0,20,5"/>
+                <TextBlock Text="高さ:" Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                <TextBox x:Name="CommonHeightTextBox" Grid.Row="0" Grid.Column="5" Text="0.139" Margin="0,0,0,5"/>
                 <TextBlock Text="左側X:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBox x:Name="LeftXTextBox" Grid.Row="1" Grid.Column="1" Text="0.119" Margin="0,0,20,0"/>
                 <TextBlock Text="中央X:" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBox x:Name="CenterXTextBox" Grid.Row="1" Grid.Column="3" Text="0.387" Margin="0,0,20,0"/>
                 <TextBlock Text="右側X:" Grid.Row="1" Grid.Column="4" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBox x:Name="RightXTextBox" Grid.Row="1" Grid.Column="5" Text="0.656" Margin="0,0,20,0"/>
+                <TextBox x:Name="RightXTextBox" Grid.Row="1" Grid.Column="5" Text="0.656"/>
             </Grid>
         </GroupBox>
 
-        <GroupBox Header="文字検索設定" Grid.Row="3" Margin="0,0,0,15">
-            <Grid Margin="10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
-                    <Button Content="文字を追加" Click="AddCharacter_Click" Margin="0,0,10,0"/>
-                    <Button Content="選択した文字を削除" Click="RemoveCharacter_Click"/>
-                </StackPanel>
-
-                <DataGrid x:Name="CharactersDataGrid" 
-                        Grid.Row="1"
-                        AutoGenerateColumns="False"
-                        CanUserAddRows="False"
-                        SelectionMode="Single"
-                        MinHeight="200">
-                    <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="有効" Binding="{Binding IsEnabled}" Width="60"/>
-                        <DataGridTextColumn Header="検索文字" Binding="{Binding SearchText}" Width="1.5*"/>
-                        <DataGridComboBoxColumn Header="目標レベル" SelectedItemBinding="{Binding TargetLevel}" Width="120">
-                            <DataGridComboBoxColumn.ElementStyle>
-                                <Style TargetType="ComboBox">
-                                    <Setter Property="ItemsSource" Value="{x:Static local:CharacterTarget.AvailableTargetLevels}"/>
-                                </Style>
-                            </DataGridComboBoxColumn.ElementStyle>
-                            <DataGridComboBoxColumn.EditingElementStyle>
-                                <Style TargetType="ComboBox">
-                                    <Setter Property="ItemsSource" Value="{x:Static local:CharacterTarget.AvailableTargetLevels}"/>
-                                </Style>
-                            </DataGridComboBoxColumn.EditingElementStyle>
-                        </DataGridComboBoxColumn>
-                        <DataGridTextColumn Header="メモ" Binding="{Binding Memo}" Width="2*"/>
-                        <DataGridTextColumn Header="表示色" Binding="{Binding DisplayColor}" Width="100"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </GroupBox>
-
-        <!-- ボタン -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="保存" Click="Save_Click" Width="100" Margin="0,0,10,0"/>
-            <Button Content="キャンセル" Click="Cancel_Click" Width="100"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="保存" Click="Save_Click" Width="100" Height="35" Margin="0,0,10,0"/>
+            <Button Content="キャンセル" Click="Cancel_Click" Width="100" Height="35"/>
         </StackPanel>
     </Grid>
 </Window>

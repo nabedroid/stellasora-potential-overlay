@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Storage.Streams;
@@ -8,47 +13,42 @@ using StellasoraPotentialOverlay.Models;
 
 namespace StellasoraPotentialOverlay.Services;
 
-/// <summary>
-/// OCRサービス (Windows.Media.Ocr API使用)
-/// </summary>
-public class OcrService
+public class OcrService : IDisposable
 {
     private OcrEngine? _ocrEngine;
     private bool _isInitialized = false;
 
-    /// <summary>
-    /// OCRエンジンを初期化
-    /// </summary>
     public async Task<bool> InitializeAsync()
     {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("[OCR] 初期化開始...");
-            var language = new Windows.Globalization.Language("ja");
-            _ocrEngine = OcrEngine.TryCreateFromLanguage(language);
-            
-            if (_ocrEngine == null)
+        return await Task.Run(() => {
+            try
             {
-                System.Diagnostics.Debug.WriteLine("[OCR] エラー: OCRエンジンの初期化に失敗 - 日本語言語パックが見つかりません");
+                System.Diagnostics.Debug.WriteLine("[OCR] 初期化開始...");
+                var language = new Windows.Globalization.Language("ja");
+                if (!OcrEngine.IsLanguageSupported(language))
+                {
+                    _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
+                }
+                else
+                {
+                    _ocrEngine = OcrEngine.TryCreateFromLanguage(language);
+                }
+
+                if (_ocrEngine == null) return false;
+
+                _isInitialized = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OCR] 初期化エラー: {ex.Message}");
                 return false;
             }
-
-            _isInitialized = true;
-            System.Diagnostics.Debug.WriteLine($"[OCR] 初期化成功: 言語={language.DisplayName}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[OCR] 初期化エラー: {ex.Message}");
-            _isInitialized = false;
-            return false;
-        }
+        });
     }
 
-    /// <summary>
-    /// 指定された領域からOCR認識を実行
-    /// </summary>
-    public async Task<List<OcrDetectionResult>> RecognizeTextAsync(Bitmap capturedImage, AppConfig config) {
+    public async Task<List<OcrDetectionResult>> RecognizeTextAsync(Bitmap capturedImage, AppConfig config)
+    {
         var results = new List<OcrDetectionResult>();
 
         if (!_isInitialized || _ocrEngine == null || capturedImage == null)
@@ -62,43 +62,43 @@ public class OcrService
         {
             try
             {
-                // 領域を切り出し
-                var rect = new System.Drawing.Rectangle(
-                    (int)(x * windowWidth),
-                    (int)(config.CommonY * windowHeight),
-                    (int)(config.CommonWidth * windowWidth),
-                    (int)(config.CommonHeight * windowHeight)
-                );
-                    
-                // 範囲チェック
-                if (rect.X < 0 || rect.Y < 0 || 
-                    rect.X + rect.Width > windowWidth || 
-                    rect.Y + rect.Height > windowHeight)
-                    continue;
+                // 1. 広めの領域を切り出し
+                var rect = CalculateRect(x, config.CommonY, config.CommonWidth, config.CommonHeight, windowWidth, windowHeight);
+                if (rect.IsEmpty) continue;
 
-                using var regionBitmap = capturedImage.Clone(rect, capturedImage.PixelFormat);
+                // 2. 方針B: 特定色抽出フィルタ + 拡大
+                using var processedBitmap = config.UseColorThreshold 
+                    ? PreprocessImageWithColorFilter(capturedImage, rect, config.ColorThreshold) 
+                    : capturedImage.Clone(rect, capturedImage.PixelFormat);
                 
-                // OCR実行
-                var recognizedText = await RecognizeFromBitmapAsync(regionBitmap);
-                
-                if (string.IsNullOrWhiteSpace(recognizedText))
-                    continue;
+                // 3. OCR実行
+                var ocrResult = await RecognizeBitmapAsync(processedBitmap);
+                if (ocrResult == null || ocrResult.Lines.Count == 0) continue;
 
-                // 検索対象とマッチング
-                var matchedTarget = FindMatchingTarget(recognizedText, config.CharacterTargets);
-                
-                if (matchedTarget != null)
+                // 4. 行フィルタリング (一番上の行だけを採用)
+                // OcrLine自体には座標がないため、その行に含まれる単語(Words)の座標を参照する
+                var firstLine = ocrResult.Lines
+                    .Where(l => l.Words.Count > 0)
+                    .OrderBy(l => l.Words[0].BoundingRect.Y) // Y座標順（上から下へ）
+                    .FirstOrDefault();
+
+                if (firstLine != null && !string.IsNullOrWhiteSpace(firstLine.Text))
                 {
-                    results.Add(new OcrDetectionResult
+                    // マッチング
+                    var matchedTarget = FindMatchingTarget(firstLine.Text, config.CharacterTargets);
+                    if (matchedTarget != null)
                     {
-                        RecognizedText = recognizedText,
-                        MatchedTarget = matchedTarget,
-                        X = rect.X,
-                        Y = rect.Y,
-                        Width = rect.Width,
-                        Height = rect.Height,
-                        Confidence = 1.0
-                    });
+                        results.Add(new OcrDetectionResult
+                        {
+                            RecognizedText = firstLine.Text,
+                            MatchedTarget = matchedTarget,
+                            X = rect.X,
+                            Y = rect.Y,
+                            Width = rect.Width,
+                            Height = rect.Height,
+                            Confidence = 1.0
+                        });
+                    }
                 }
             }
             catch
@@ -106,214 +106,187 @@ public class OcrService
                 continue;
             }
         }
-        
 
         return results;
     }
 
-    /// <summary>
-    /// 渡されたBitmap全体を解析（上下に分割して精度向上）
-    /// </summary>
-    private async Task<string> RecognizeFromBitmapAsync(Bitmap bitmap)
+    // デバッグ用
+    public async Task<List<OcrDebugResult>> RecognizeTextDebugAsync(Bitmap capturedImage, AppConfig config)
     {
-        if (_ocrEngine == null) return string.Empty;
-
-        // 上下に分ける境界線
-        int midY = bitmap.Height / 2;
-        Rectangle upperRect = new Rectangle(0, 0, bitmap.Width, midY);
-        Rectangle lowerRect = new Rectangle(0, midY, bitmap.Width, bitmap.Height - midY);
-
-        // 同じ閾値で両方の領域を処理
-        int threshold = 192;
-        
-        string upperText = await ProcessRegionAsync(bitmap, upperRect, threshold);
-        string lowerText = await ProcessRegionAsync(bitmap, lowerRect, threshold);
-
-        var result = upperText + lowerText;
-        System.Diagnostics.Debug.WriteLine($"[OCR] 最終結合結果: [{result}]");
-        return result;
-    }
-
-    /// <summary>
-    /// 特定の矩形領域を切り出し、加工してOCRを実行する
-    /// </summary>
-    private async Task<string> ProcessRegionAsync(Bitmap original, Rectangle rect, int threshold)
-    {
-        Bitmap? regionBmp = null;
-        Bitmap? scaledBmp = null;
-        Bitmap? binarizedBmp = null;
-
-        try
-        {
-            // 1. 領域切り出し
-            regionBmp = original.Clone(rect, original.PixelFormat);
-
-            // 2. 拡大処理（OCRは文字サイズがある程度大きくないと反応しません）
-            int scale = 3;
-            scaledBmp = new Bitmap(regionBmp.Width * scale, regionBmp.Height * scale);
-            using (var g = Graphics.FromImage(scaledBmp))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
-                g.DrawImage(regionBmp, 0, 0, scaledBmp.Width, scaledBmp.Height);
-            }
-
-            // 3. 二値化（ApplyBinarization は既存のものを使用）
-            binarizedBmp = ApplyBinarization(scaledBmp, threshold);
-
-            // 4. SoftwareBitmapに変換してOCR実行
-            using var memoryStream = new System.IO.MemoryStream();
-            regionBmp.Save(memoryStream, ImageFormat.Bmp);
-            memoryStream.Position = 0;
-
-            using var randomAccessStream = new InMemoryRandomAccessStream();
-            await randomAccessStream.WriteAsync(memoryStream.ToArray().AsBuffer());
-            
-            var decoder = await BitmapDecoder.CreateAsync(randomAccessStream);
-            var softwareBitmap = await decoder.GetSoftwareBitmapAsync();
-
-            var ocrResult = await _ocrEngine.RecognizeAsync(softwareBitmap);
-            return string.Join("", ocrResult.Lines.Select(line => line.Text));
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[OCR] 領域処理エラー: {ex.Message}");
-            return string.Empty;
-        }
-        finally
-        {
-            // 確実にメモリを解放
-            regionBmp?.Dispose();
-            scaledBmp?.Dispose();
-            binarizedBmp?.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// デバッグ用: 指定された領域からOCR認識を実行（マッチング不要）
-    /// </summary>
-    public async Task<List<OcrDebugResult>> RecognizeTextDebugAsync(Bitmap capturedImage, AppConfig config) {
         var results = new List<OcrDebugResult>();
-
-        if (!_isInitialized || _ocrEngine == null || capturedImage == null)
-            return results;
+        if (!_isInitialized || _ocrEngine == null || capturedImage == null) return results;
 
         int windowWidth = capturedImage.Width;
         int windowHeight = capturedImage.Height;
         List<double> xs = new List<double> { config.LeftX, config.CenterX, config.RightX };
+        int regionId = 0;
 
         foreach (var x in xs)
         {
-            try
+            regionId++;
+            var rect = CalculateRect(x, config.CommonY, config.CommonWidth, config.CommonHeight, windowWidth, windowHeight);
+            if (rect.IsEmpty) continue;
+
+            using var processedBitmap = config.UseColorThreshold 
+                ? PreprocessImageWithColorFilter(capturedImage, rect, config.ColorThreshold) 
+                : capturedImage.Clone(rect, capturedImage.PixelFormat);
+            var ocrResult = await RecognizeBitmapAsync(processedBitmap);
+
+            string displayText = "[認識なし]";
+            
+            if (ocrResult != null && ocrResult.Lines.Count > 0)
             {
-                // 領域を切り出し
-                var rect = new System.Drawing.Rectangle(
-                    (int)(x * windowWidth),
-                    (int)(config.CommonY * windowHeight),
-                    (int)(config.CommonWidth * windowWidth),
-                    (int)(config.CommonHeight * windowHeight)
-                );
-                
-                // 範囲チェック
-                if (rect.X < 0 || rect.Y < 0 || 
-                    rect.X + rect.Width > windowWidth || 
-                    rect.Y + rect.Height > windowHeight)
-                    continue;
+                // Y座標順にソートしてデバッグ表示
+                var lines = ocrResult.Lines
+                    .Where(l => l.Words.Count > 0)
+                    .OrderBy(l => l.Words[0].BoundingRect.Y)
+                    .ToList();
 
-                using var regionBitmap = capturedImage.Clone(rect, capturedImage.PixelFormat);
-                
-                // OCR実行
-                var recognizedText = await RecognizeFromBitmapAsync(regionBitmap);
-
-                results.Add(new OcrDebugResult
+                if (lines.Count > 0)
                 {
-                    RecognizedText = recognizedText,
-                    X = rect.X,
-                    Y = rect.Y,
-                    Width = rect.Width,
-                    Height = rect.Height
-                });
+                    var firstLine = lines[0].Text;
+                    var otherLines = string.Join(", ", lines.Skip(1).Select(l => l.Text));
+                    
+                    displayText = $"採用: {firstLine}";
+                    if (!string.IsNullOrEmpty(otherLines))
+                    {
+                        displayText += $"\n(無視: {otherLines})";
+                    }
+                }
             }
-            catch
-            {
-                continue;
-            }
-        }
 
+            results.Add(new OcrDebugResult
+            {
+                RecognizedText = displayText,
+                RegionId = regionId,
+                RegionName = $"Region {regionId}",
+                X = rect.X,
+                Y = rect.Y,
+                Width = rect.Width,
+                Height = rect.Height
+            });
+        }
         return results;
     }
 
     /// <summary>
-    /// 高速な二値化処理（エフェクト対策）
+    /// 方針Bの実装: 特定色抽出フィルタ
     /// </summary>
-    private Bitmap ApplyBinarization(Bitmap source, int threshold = 192)
+    private Bitmap PreprocessImageWithColorFilter(Bitmap source, Rectangle rect, int threshold = 100)
     {
-        var dest = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppArgb);
+        // 1. 切り出し
+        using var region = source.Clone(rect, source.PixelFormat);
+
+        // 2. 拡大 (OCR精度向上用、3倍程度)
+        int scale = 3;
+        var dest = new Bitmap(region.Width * scale, region.Height * scale, PixelFormat.Format32bppArgb);
         
-        var rect = new Rectangle(0, 0, source.Width, source.Height);
-        var srcData = source.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-        var destData = dest.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+        using (var g = Graphics.FromImage(dest))
+        {
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.DrawImage(region, 0, 0, dest.Width, dest.Height);
+        }
+
+        // 3. ピクセル単位のフィルタ処理
+        var rectData = new Rectangle(0, 0, dest.Width, dest.Height);
+        var data = dest.LockBits(rectData, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
         unsafe
         {
-            byte* srcPtr = (byte*)srcData.Scan0;
-            byte* destPtr = (byte*)destData.Scan0;
-            int pixelCount = source.Width * source.Height;
+            byte* ptr = (byte*)data.Scan0;
+            int totalBytes = data.Stride * dest.Height;
+            int bytesPerPixel = 4; // ARGB
 
-            for (int i = 0; i < pixelCount; i++)
+            for (int i = 0; i < totalBytes; i += bytesPerPixel)
             {
-                int baseIdx = i * 4;
-                byte b = srcPtr[baseIdx];
-                byte g = srcPtr[baseIdx + 1];
-                byte r = srcPtr[baseIdx + 2];
+                // B, G, R の順
+                byte b = ptr[i];
+                byte g = ptr[i + 1];
+                byte r = ptr[i + 2];
 
-                // 輝度の計算 (Rec.601)
-                int gray = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+                // R, G, B すべてが閾値より低い（＝暗い色）なら文字として残す（黒にする）
+                // それ以外は白にする
+                bool isDarkText = (r < threshold && g < threshold && b < threshold);
 
-                // エフェクト（薄い白）対策：
-                // 閾値より「暗い」部分を黒（文字）とし、それ以外を白（背景）にする
-                // 文字が黒系・背景が白系の場合、thresholdを低め（100前後）にするとエフェクトが消えます
-                byte result = (gray < threshold) ? (byte)0 : (byte)255;
-
-                destPtr[baseIdx] = result;     // B
-                destPtr[baseIdx + 1] = result; // G
-                destPtr[baseIdx + 2] = result; // R
-                destPtr[baseIdx + 3] = 255;    // A
+                if (isDarkText)
+                {
+                    ptr[i] = 0;     // B
+                    ptr[i + 1] = 0; // G
+                    ptr[i + 2] = 0; // R
+                }
+                else
+                {
+                    ptr[i] = 255;     // B
+                    ptr[i + 1] = 255; // G
+                    ptr[i + 2] = 255; // R
+                }
+                ptr[i + 3] = 255; // Alpha
             }
         }
-
-        source.UnlockBits(srcData);
-        dest.UnlockBits(destData);
+        
+        dest.UnlockBits(data);
         return dest;
     }
 
-    /// <summary>
-    /// 認識された文字と検索対象をマッチング
-    /// </summary>
+    private Rectangle CalculateRect(double xRatio, double yRatio, double wRatio, double hRatio, int totalW, int totalH)
+    {
+        int x = (int)(xRatio * totalW);
+        int y = (int)(yRatio * totalH);
+        int w = (int)(wRatio * totalW);
+        int h = (int)(hRatio * totalH);
+
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x + w > totalW) w = totalW - x;
+        if (y + h > totalH) h = totalH - y;
+
+        return new Rectangle(x, y, w, h);
+    }
+
+    private async Task<OcrResult?> RecognizeBitmapAsync(Bitmap bitmap)
+    {
+        if (_ocrEngine == null) return null;
+
+        using var memoryStream = new MemoryStream();
+        bitmap.Save(memoryStream, ImageFormat.Bmp);
+        memoryStream.Position = 0;
+
+        using var randomAccessStream = new InMemoryRandomAccessStream();
+        await randomAccessStream.WriteAsync(memoryStream.ToArray().AsBuffer());
+
+        var decoder = await BitmapDecoder.CreateAsync(randomAccessStream);
+        using var softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+
+        return await _ocrEngine.RecognizeAsync(softwareBitmap);
+    }
+
     private CharacterTarget? FindMatchingTarget(string recognizedText, List<CharacterTarget> targets)
     {
-        // 空白を除去して比較
-        var cleanedText = recognizedText.Replace(" ", "").Replace("　", "");
+        var cleanedText = recognizedText
+            .Replace(" ", "")
+            .Replace("　", "")
+            .Replace(".", "")
+            .Replace(",", "")
+            .Replace("'", "")
+            .Replace("’", "");
 
         foreach (var target in targets.Where(t => t.IsEnabled))
         {
             var cleanedSearchText = target.SearchText.Replace(" ", "").Replace("　", "");
-            
-            // 部分一致で検索
+            if (string.IsNullOrEmpty(cleanedSearchText)) continue;
+
             if (cleanedText.Contains(cleanedSearchText))
             {
                 return target;
             }
         }
-
         return null;
     }
 
-    /// <summary>
-    /// リソースの解放
-    /// </summary>
     public void Dispose()
     {
         _ocrEngine = null;
         _isInitialized = false;
+        GC.SuppressFinalize(this);
     }
 }

@@ -1,9 +1,13 @@
 
 # PowerShell script to build the application in Docker
 # Debug or Release
-$config = "Release"
+param(
+    [ValidateSet("Debug", "Release")]
+    [Alias("c")]
+    [string]$Config = "Debug"
+)
 
-$outputDir = if ($config -eq "Debug") { "debug_output" } else { "output" }
+$outputDir = if ($Config -eq "Debug") { "debug_output" } else { "output" }
 
 Write-Host "Building StellasoraPotentialOverlay in Docker..." -ForegroundColor Cyan
 
@@ -37,10 +41,10 @@ if ($LASTEXITCODE -ne 0) {
 # シングルファイルEXEとして公開
 Write-Host "`nPublishing as single-file executable..." -ForegroundColor Yellow
 docker-compose run --rm builder dotnet publish src/StellasoraPotentialOverlay.csproj `
-    -c $config `
+    -c $Config `
     -r win-x64 `
     --self-contained true `
-    "-p:PublishSingleFile=$($config -eq 'Release')" `
+    "-p:PublishSingleFile=$($Config -eq 'Release')" `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -o $outputDir
 

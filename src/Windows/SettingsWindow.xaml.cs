@@ -12,7 +12,6 @@ public partial class SettingsWindow : Window
 {
     private readonly ConfigurationService _configService;
     private AppConfig _config;
-    private ObservableCollection<CharacterTarget> _characters;
 
     public SettingsWindow(ConfigurationService configService, AppConfig config)
     {
@@ -20,7 +19,6 @@ public partial class SettingsWindow : Window
         
         _configService = configService;
         _config = config;
-        _characters = new ObservableCollection<CharacterTarget>(config.CharacterTargets);
 
         LoadSettings();
     }
@@ -36,12 +34,23 @@ public partial class SettingsWindow : Window
         // 対象ウィンドウを選択
         if (!string.IsNullOrEmpty(_config.TargetWindowTitle))
         {
+            var list = WindowComboBox.ItemsSource as List<string>;
+            if (list != null && !list.Contains(_config.TargetWindowTitle))
+            {
+                // 現在起動していなくても、設定上の名前は維持して表示
+                var newList = new List<string>(list) { _config.TargetWindowTitle };
+                WindowComboBox.ItemsSource = newList;
+            }
             WindowComboBox.SelectedItem = _config.TargetWindowTitle;
         }
 
         // 認識設定
         IntervalTextBox.Text = _config.CaptureIntervalMs.ToString();
         DebugModeCheckBox.IsChecked = _config.DebugMode;
+
+        // OCR前処理
+        UseColorThresholdCheckBox.IsChecked = _config.UseColorThreshold;
+        ColorThresholdTextBox.Text = _config.ColorThreshold.ToString();
 
         // OCR領域共通設定
         CommonYTextBox.Text = _config.CommonY.ToString();
@@ -51,9 +60,6 @@ public partial class SettingsWindow : Window
         LeftXTextBox.Text = _config.LeftX.ToString();
         CenterXTextBox.Text = _config.CenterX.ToString();
         RightXTextBox.Text = _config.RightX.ToString();
-
-        // 文字検索設定
-        CharactersDataGrid.ItemsSource = _characters;
     }
 
     /// <summary>
@@ -71,34 +77,6 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>
-    /// 文字を追加
-    /// </summary>
-    private void AddCharacter_Click(object sender, RoutedEventArgs e)
-    {
-        var character = new CharacterTarget
-        {
-            SearchText = "新しい文字",
-            TargetLevel = "取得のみ",
-            Memo = "",
-            DisplayColor = "#FFFFFF00",
-            IsEnabled = true
-        };
-
-        _characters.Add(character);
-    }
-
-    /// <summary>
-    /// 選択した文字を削除
-    /// </summary>
-    private void RemoveCharacter_Click(object sender, RoutedEventArgs e)
-    {
-        if (CharactersDataGrid.SelectedItem is CharacterTarget selectedCharacter)
-        {
-            _characters.Remove(selectedCharacter);
-        }
-    }
-
-    /// <summary>
     /// 保存
     /// </summary>
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -113,6 +91,10 @@ public partial class SettingsWindow : Window
 
             _config.DebugMode = DebugModeCheckBox.IsChecked ?? false;
 
+            // OCR前処理
+            _config.UseColorThreshold = UseColorThresholdCheckBox.IsChecked ?? false;
+            if (int.TryParse(ColorThresholdTextBox.Text, out int colorThreshold))
+                _config.ColorThreshold = Math.Max(0, Math.Min(255, colorThreshold));
             // OCR領域共通設定を保存
             if (double.TryParse(CommonYTextBox.Text, out double commonY))
                 _config.CommonY = commonY;
@@ -127,13 +109,10 @@ public partial class SettingsWindow : Window
             if (double.TryParse(RightXTextBox.Text, out double rightX))
                 _config.RightX = rightX;
 
-            // 文字検索設定を保存
-            _config.CharacterTargets = _characters.ToList();
-
             // 保存
             if (_configService.SaveConfig(_config))
             {
-                MessageBox.Show("設定を保存しました。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                // MessageBox.Show("設定を保存しました。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
                 DialogResult = true;
                 Close();
             }

@@ -45,6 +45,24 @@ public class AppConfig
     public double CommonWidth { get; set; } = 0.227;
     
     /// <summary>高さ（比率: 0.0-1.0）</summary>
-    public double CommonHeight { get; set; } = 0.097;
+    public double CommonHeight { get; set; } = 0.139;
+    
+    /// <summary>色閾値</summary>
+    public int ColorThreshold { get; set; } = 185;
+    
+    /// <summary>色閾値を使用する</summary>
+    public bool UseColorThreshold { get; set; } = true;
+
+    /// <summary>選択中の主力キャラクター</summary>
+    public string SelectedMainChar { get; set; } = "";
+    
+    /// <summary>選択中の支援キャラクター1</summary>
+    public string SelectedSupportChar1 { get; set; } = "";
+    
+    /// <summary>選択中の支援キャラクター2</summary>
+    public string SelectedSupportChar2 { get; set; } = "";
+
+    /// <summary>選択中の素質リスト</summary>
+    public List<CharacterTarget> SelectedPotentials { get; set; } = new();
 }
 
