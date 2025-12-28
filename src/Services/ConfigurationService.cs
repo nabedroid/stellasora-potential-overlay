@@ -79,6 +79,8 @@ public class ConfigurationService
             LeftX = 0.119,
             CenterX = 0.387,
             RightX = 0.656,
+            X2LeftX = 0.253,
+            X2RightX = 0.5225,
             CharacterTargets = new List<CharacterTarget>(),
             DebugMode = false,
             CommonY = 0.504,

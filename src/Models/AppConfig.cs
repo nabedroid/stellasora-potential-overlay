@@ -19,6 +19,12 @@ public class AppConfig
     
     /// <summary>右端のX座標（比率: 0.0-1.0）</summary>
     public double RightX { get; set; } = 0.656;
+
+    /// <summary>左側X（2枚時）（比率: 0.0-1.0）</summary>
+    public double X2LeftX { get; set; } = 0.253;
+
+    /// <summary>右側X（2枚時）（比率: 0.0-1.0）</summary>
+    public double X2RightX { get; set; } = 0.5225;
     
     /// <summary>検索対象の文字リスト</summary>
     public List<CharacterTarget> CharacterTargets { get; set; } = new();

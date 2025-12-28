@@ -2,6 +2,10 @@
 
 ゲームウィンドウを1秒ごとにキャプチャし、素質カード選択で対象のカードにメッセージを表示する。
 
+![image](https://github-production-user-asset-6210df.s3.amazonaws.com/51204438/530483629-682f76b4-56e0-4bf5-b56f-e3b5eee54655.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251227T144249Z&X-Amz-Expires=300&X-Amz-Signature=1a2d4ec45f596d4fd566890b46cea608b0184f08bafea08b7e33f0144627eb47&X-Amz-SignedHeaders=host)
+
+![image](https://github-production-user-asset-6210df.s3.amazonaws.com/51204438/530483607-700558e9-0359-4b56-ab3b-5112e1ea2f57.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251227T144214Z&X-Amz-Expires=300&X-Amz-Signature=b1f7e35d582c82e00b5afd20b82c630f4ef71a36c928e4698bb7dbbfec769fc1&X-Amz-SignedHeaders=host)
+
 ## 必要な環境
 
 - Windows 10/11 (64bit)
@@ -122,3 +126,8 @@ MIT License
   - git push
   - git tag v9.9.9
   - git push origin v9.9.9
+- スロットマシンで素質を1、2つ選択するケースが認識されない
+  - 2枚の場合
+    - x: 0.253, x: 0.5225
+  - 1枚の場合（3枚の中央と同じ）
+    - x: 0.387
