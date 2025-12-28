@@ -56,7 +56,7 @@ public class OcrService : IDisposable
 
         int windowWidth = capturedImage.Width;
         int windowHeight = capturedImage.Height;
-        List<double> xs = new List<double> { config.LeftX, config.CenterX, config.RightX };
+        List<double> xs = new List<double> { config.LeftX, config.CenterX, config.RightX, config.X2LeftX, config.X2RightX };
 
         foreach (var x in xs)
         {
@@ -118,7 +118,7 @@ public class OcrService : IDisposable
 
         int windowWidth = capturedImage.Width;
         int windowHeight = capturedImage.Height;
-        List<double> xs = new List<double> { config.LeftX, config.CenterX, config.RightX };
+        List<double> xs = new List<double> { config.LeftX, config.CenterX, config.RightX, config.X2LeftX, config.X2RightX };
         int regionId = 0;
 
         foreach (var x in xs)

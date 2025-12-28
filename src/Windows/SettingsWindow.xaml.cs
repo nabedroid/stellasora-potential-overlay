@@ -60,6 +60,8 @@ public partial class SettingsWindow : Window
         LeftXTextBox.Text = _config.LeftX.ToString();
         CenterXTextBox.Text = _config.CenterX.ToString();
         RightXTextBox.Text = _config.RightX.ToString();
+        X2LeftXTextBox.Text = _config.X2LeftX.ToString();
+        X2RightXTextBox.Text = _config.X2RightX.ToString();
     }
 
     /// <summary>
@@ -108,6 +110,10 @@ public partial class SettingsWindow : Window
                 _config.CenterX = centerX;
             if (double.TryParse(RightXTextBox.Text, out double rightX))
                 _config.RightX = rightX;
+            if (double.TryParse(X2LeftXTextBox.Text, out double x2LeftX))
+                _config.X2LeftX = x2LeftX;
+            if (double.TryParse(X2RightXTextBox.Text, out double x2RightX))
+                _config.X2RightX = x2RightX;
 
             // 保存
             if (_configService.SaveConfig(_config))

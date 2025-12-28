@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:StellasoraPotentialOverlay.Models"
         Title="設定"
-        Height="500"
+        Height="550"
         Width="600"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
@@ -50,6 +50,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Text="Y座標:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,5"/>
                 <TextBox x:Name="CommonYTextBox" Grid.Row="0" Grid.Column="1" Text="0.504" Margin="0,0,20,5"/>
@@ -63,6 +64,10 @@
                 <TextBox x:Name="CenterXTextBox" Grid.Row="1" Grid.Column="3" Text="0.387" Margin="0,0,20,0"/>
                 <TextBlock Text="右側X:" Grid.Row="1" Grid.Column="4" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBox x:Name="RightXTextBox" Grid.Row="1" Grid.Column="5" Text="0.656"/>
+                <TextBlock Text="左側X(2枚):" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,0"/>
+                <TextBox x:Name="X2LeftXTextBox" Grid.Row="2" Grid.Column="1" Text="0.253" Margin="0,5,20,0"/>
+                <TextBlock Text="右側X(2枚):" Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Margin="0,5,10,0"/>
+                <TextBox x:Name="X2RightXTextBox" Grid.Row="2" Grid.Column="3" Text="0.5225" Margin="0,5,20,0"/>
             </Grid>
         </GroupBox>
 
