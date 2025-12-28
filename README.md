@@ -2,9 +2,10 @@
 
 ゲームウィンドウを1秒ごとにキャプチャし、素質カード選択で対象のカードにメッセージを表示する。
 
-![image](https://github-production-user-asset-6210df.s3.amazonaws.com/51204438/530483629-682f76b4-56e0-4bf5-b56f-e3b5eee54655.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251227T144249Z&X-Amz-Expires=300&X-Amz-Signature=1a2d4ec45f596d4fd566890b46cea608b0184f08bafea08b7e33f0144627eb47&X-Amz-SignedHeaders=host)
+<img width="1602" height="932" alt="スクリーンショット 2025-12-27 032548" src="https://github.com/user-attachments/assets/0332eb3f-8098-416b-b0f9-e3e9c3cf320a" />
 
-![image](https://github-production-user-asset-6210df.s3.amazonaws.com/51204438/530483607-700558e9-0359-4b56-ab3b-5112e1ea2f57.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251227T144214Z&X-Amz-Expires=300&X-Amz-Signature=b1f7e35d582c82e00b5afd20b82c630f4ef71a36c928e4698bb7dbbfec769fc1&X-Amz-SignedHeaders=host)
+<img width="986" height="593" alt="スクリーンショット 2025-12-27 233827" src="https://github.com/user-attachments/assets/8190dbb0-fe00-4adf-b370-e70cded5ad88" />
+
 
 ## 必要な環境
 
@@ -59,12 +60,12 @@ OCR領域と認識された文字を確認したい場合:
 
 ### その他設定
 設定からOCR領域等の詳細な設定を行えます。
-デフォルトは微調整した値ですので、変更は非推奨です。
+座標、閾値は認識精度が落ちる可能性が高いため、変更は非推奨です。
 どうしてもうまく認識しない場合は、デバッグで確認しながら微調整してください。
 
 #### キャプチャ間隔
 画面をキャプチャしてOCRを実行する間隔を指定できます。
-デフォルトは1秒です。
+デフォルトは1秒間隔です。
 
 #### 色閾値
 画像の二値化を行い、文字の輪郭を明確にします。
@@ -83,6 +84,8 @@ OCR領域と認識された文字を確認したい場合:
 - **左側X**: 左側のカードの左端
 - **中央X**: 中央のカードの左端
 - **右側X**: 右側のカードの左端
+- **左側X（2枚）: 2枚カードが表示されたときの左側のカードの左端
+- **右側X（2枚）: 2枚カードが表示されたときの右側のカードの左端
 
 ## 設定ファイル
 
@@ -126,8 +129,3 @@ MIT License
   - git push
   - git tag v9.9.9
   - git push origin v9.9.9
-- スロットマシンで素質を1、2つ選択するケースが認識されない
-  - 2枚の場合
-    - x: 0.253, x: 0.5225
-  - 1枚の場合（3枚の中央と同じ）
-    - x: 0.387
