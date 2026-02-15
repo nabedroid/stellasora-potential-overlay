@@ -137,61 +137,54 @@ public partial class OverlayWindow : Window
             border.Child = stackPanel;
 
             // 表示位置の設定
-            Canvas.SetLeft(border, detection.X + _clientOffsetX);
-            Canvas.SetTop(border, detection.Y + _clientOffsetY - 35); 
+            Canvas.SetLeft(border, detection.X);
+            Canvas.SetTop(border, detection.Y - 35); 
             OverlayCanvas.Children.Add(border);
         }
     }
 
     /// <summary>
-    /// デバッグモード: OCR領域と認識文字を表示
+    /// デバッグモード: OCR領域を表示（文字はDebugWindowに表示するため枠線のみ）
     /// </summary>
     public void DrawDebugInfo(List<OcrDebugResult> debugResults) {
         OverlayCanvas.Children.Clear();
 
         foreach (var result in debugResults) {
-            // 領域の枠線を描画（青色）
+            // 領域の枠線を描画（シアン、半透明）
             var rectangle = new Rectangle {
                 Width = result.Width,
                 Height = result.Height,
-                Stroke = new SolidColorBrush(Colors.Cyan),
-                StrokeThickness = 3,
-                Fill = new SolidColorBrush(Color.FromArgb(30, 0, 255, 255)) // 半透明シアン
+                Stroke = new SolidColorBrush(Color.FromArgb(200, 0, 255, 255)), // シアン
+                StrokeThickness = 2,
+                Fill = Brushes.Transparent
             };
 
-            Canvas.SetLeft(rectangle, result.X + _clientOffsetX);
-            Canvas.SetTop(rectangle, result.Y + _clientOffsetY);
+            Canvas.SetLeft(rectangle, result.X);
+            Canvas.SetTop(rectangle, result.Y);
             OverlayCanvas.Children.Add(rectangle);
 
-            // 領域名を表示
-            var regionNameTextBlock = new TextBlock {
-                Text = result.RegionName,
-                Foreground = new SolidColorBrush(Colors.Cyan),
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0))
+            // 認識テキストを表示
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)), // 黒背景（半透明）
+                Padding = new Thickness(2),
+                CornerRadius = new CornerRadius(2)
             };
 
-            Canvas.SetLeft(regionNameTextBlock, result.X + _clientOffsetX);
-            Canvas.SetTop(regionNameTextBlock, result.Y + _clientOffsetY - 25);
-            OverlayCanvas.Children.Add(regionNameTextBlock);
-
-            // 認識文字を表示
-            var recognizedTextBlock = new TextBlock {
-                Text = string.IsNullOrWhiteSpace(result.RecognizedText)
-                    ? "[認識なし]"
-                    : $"認識: {result.RecognizedText}",
-                Foreground = new SolidColorBrush(Colors.Yellow),
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = result.Width
+            var textBlock = new TextBlock
+            {
+                Text = result.RecognizedText,
+                Foreground = Brushes.Cyan,
+                FontSize = 12,
+                FontWeight = FontWeights.Bold
             };
 
-            Canvas.SetLeft(recognizedTextBlock, result.X + _clientOffsetX);
-            Canvas.SetTop(recognizedTextBlock, result.Y + _clientOffsetY + result.Height + 5);
-            OverlayCanvas.Children.Add(recognizedTextBlock);
+            border.Child = textBlock;
+
+            // 枠の上に表示
+            Canvas.SetLeft(border, result.X);
+            Canvas.SetTop(border, result.Y - 20); 
+            OverlayCanvas.Children.Add(border);
         }
     }
 

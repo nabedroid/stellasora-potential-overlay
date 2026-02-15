@@ -25,4 +25,10 @@ public class OcrDebugResult
     
     /// <summary>認識領域の高さ</summary>
     public int Height { get; set; }
+
+    /// <summary>表示用座標</summary>
+    public string DisplayCoordinates => $"{X}, {Y}";
+
+    /// <summary>表示用サイズ</summary>
+    public string DisplaySize => $"{Width}x{Height}";
 }

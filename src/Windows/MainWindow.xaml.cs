@@ -13,7 +13,7 @@ public partial class MainWindow : Window
     private readonly ConfigurationService _configService;
     private readonly WindowCaptureService _captureService;
     private readonly OcrService _ocrService;
-    private readonly OverlayWindow _overlayWindow;
+    private OverlayWindow _overlayWindow;
     private readonly DispatcherTimer _captureTimer;
     private readonly MasterDataService _masterDataService;
 
@@ -115,6 +115,9 @@ public partial class MainWindow : Window
         // オーバーレイを表示
         _overlayWindow.Show();
 
+        // WGCキャプチャ開始
+        _captureService.StartCapture();
+
         // タイマー開始
         _captureTimer.Interval = TimeSpan.FromMilliseconds(_config.CaptureIntervalMs);
         _captureTimer.Start();
@@ -140,6 +143,7 @@ public partial class MainWindow : Window
     private void StopCapture()
     {
         _captureTimer.Stop();
+        _captureService.StopCapture(); // WGC停止
         _overlayWindow.Hide();
         _overlayWindow.ClearOverlay();
 
@@ -224,11 +228,12 @@ public partial class MainWindow : Window
             // オーバーレイの位置を更新
             _overlayWindow.SetBounds(windowInfo);
 
-            // ウィンドウをキャプチャ
-            using var capturedImage = _captureService.CaptureWindow();
+            // ウィンドウをキャプチャ (WGCでキャッシュされた最新フレームを取得)
+            using var capturedImage = _captureService.GetLatestFrame();
             if (capturedImage == null)
                 return;
 
+            // デバッグモードの場合
             // デバッグモードの場合
             if (_config.DebugMode)
             {
@@ -261,6 +266,7 @@ public partial class MainWindow : Window
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         StopCapture();
+        _captureService.Dispose(); // 追加
         _ocrService.Dispose();
         _overlayWindow.Close();
     }

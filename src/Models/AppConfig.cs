@@ -11,21 +11,6 @@ public class AppConfig
     /// <summary>キャプチャ間隔 (ミリ秒)</summary>
     public int CaptureIntervalMs { get; set; } = 1000;
     
-    /// <summary>左端のX座標（比率: 0.0-1.0）</summary>
-    public double LeftX { get; set; } = 0.119;
-    
-    /// <summary>中心のX座標（比率: 0.0-1.0）</summary>
-    public double CenterX { get; set; } = 0.387;
-    
-    /// <summary>右端のX座標（比率: 0.0-1.0）</summary>
-    public double RightX { get; set; } = 0.656;
-
-    /// <summary>左側X（2枚時）（比率: 0.0-1.0）</summary>
-    public double X2LeftX { get; set; } = 0.253;
-
-    /// <summary>右側X（2枚時）（比率: 0.0-1.0）</summary>
-    public double X2RightX { get; set; } = 0.5225;
-    
     /// <summary>検索対象の文字リスト</summary>
     public List<CharacterTarget> CharacterTargets { get; set; } = new();
     
@@ -43,21 +28,6 @@ public class AppConfig
     
     /// <summary>デバッグモード</summary>
     public bool DebugMode { get; set; } = false;
-    
-    /// <summary>Y座標（比率: 0.0-1.0）</summary>
-    public double CommonY { get; set; } = 0.504;
-    
-    /// <summary>幅（比率: 0.0-1.0）</summary>
-    public double CommonWidth { get; set; } = 0.227;
-    
-    /// <summary>高さ（比率: 0.0-1.0）</summary>
-    public double CommonHeight { get; set; } = 0.139;
-    
-    /// <summary>色閾値</summary>
-    public int ColorThreshold { get; set; } = 185;
-    
-    /// <summary>色閾値を使用する</summary>
-    public bool UseColorThreshold { get; set; } = true;
 
     /// <summary>選択中の主力キャラクター</summary>
     public string SelectedMainChar { get; set; } = "";

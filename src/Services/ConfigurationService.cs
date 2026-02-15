@@ -76,18 +76,8 @@ public class ConfigurationService
             BorderColor = "#FF00FF00",
             BorderThickness = 2,
             TextSize = 14,
-            LeftX = 0.119,
-            CenterX = 0.387,
-            RightX = 0.656,
-            X2LeftX = 0.253,
-            X2RightX = 0.5225,
             CharacterTargets = new List<CharacterTarget>(),
-            DebugMode = false,
-            CommonY = 0.504,
-            CommonWidth = 0.227,
-            CommonHeight = 0.139,
-            ColorThreshold = 185,
-            UseColorThreshold = true
+            DebugMode = false
         };
     }
 

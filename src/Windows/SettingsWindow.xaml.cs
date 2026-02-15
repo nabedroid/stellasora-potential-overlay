@@ -47,21 +47,6 @@ public partial class SettingsWindow : Window
         // 認識設定
         IntervalTextBox.Text = _config.CaptureIntervalMs.ToString();
         DebugModeCheckBox.IsChecked = _config.DebugMode;
-
-        // OCR前処理
-        UseColorThresholdCheckBox.IsChecked = _config.UseColorThreshold;
-        ColorThresholdTextBox.Text = _config.ColorThreshold.ToString();
-
-        // OCR領域共通設定
-        CommonYTextBox.Text = _config.CommonY.ToString();
-        CommonWidthTextBox.Text = _config.CommonWidth.ToString();
-        CommonHeightTextBox.Text = _config.CommonHeight.ToString();
-        // 個別のX座標
-        LeftXTextBox.Text = _config.LeftX.ToString();
-        CenterXTextBox.Text = _config.CenterX.ToString();
-        RightXTextBox.Text = _config.RightX.ToString();
-        X2LeftXTextBox.Text = _config.X2LeftX.ToString();
-        X2RightXTextBox.Text = _config.X2RightX.ToString();
     }
 
     /// <summary>
@@ -92,28 +77,6 @@ public partial class SettingsWindow : Window
                 _config.CaptureIntervalMs = Math.Max(100, interval);
 
             _config.DebugMode = DebugModeCheckBox.IsChecked ?? false;
-
-            // OCR前処理
-            _config.UseColorThreshold = UseColorThresholdCheckBox.IsChecked ?? false;
-            if (int.TryParse(ColorThresholdTextBox.Text, out int colorThreshold))
-                _config.ColorThreshold = Math.Max(0, Math.Min(255, colorThreshold));
-            // OCR領域共通設定を保存
-            if (double.TryParse(CommonYTextBox.Text, out double commonY))
-                _config.CommonY = commonY;
-            if (double.TryParse(CommonWidthTextBox.Text, out double commonWidth))
-                _config.CommonWidth = commonWidth;
-            if (double.TryParse(CommonHeightTextBox.Text, out double commonHeight))
-                _config.CommonHeight = commonHeight;
-            if (double.TryParse(LeftXTextBox.Text, out double leftX))
-                _config.LeftX = leftX;
-            if (double.TryParse(CenterXTextBox.Text, out double centerX))
-                _config.CenterX = centerX;
-            if (double.TryParse(RightXTextBox.Text, out double rightX))
-                _config.RightX = rightX;
-            if (double.TryParse(X2LeftXTextBox.Text, out double x2LeftX))
-                _config.X2LeftX = x2LeftX;
-            if (double.TryParse(X2RightXTextBox.Text, out double x2RightX))
-                _config.X2RightX = x2RightX;
 
             // 保存
             if (_configService.SaveConfig(_config))
