@@ -107,6 +107,9 @@ MIT License
 - キャプチャを Bitblt から Windows Graphics Capture API に変更
 - 記号を含む文字列を認識するように修正
 
+### v0.2.1（2026-02-28）
+- レイスを追加
+
 # TODO
 - プリセットを用意して素質の選択を楽にしたい
 - github のリリースを更新する場合
